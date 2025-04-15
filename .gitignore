@@ -1,0 +1,104 @@
+# --- Python (Django, Celery) ---
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+*.env
+.env.*
+.envrc
+
+# Django static files and media
+staticfiles/
+media/
+*.mo
+
+# Django collectstatic output
+/static/
+collected_static/
+
+# VS Code and PyCharm settings
+.vscode/
+.idea/
+
+# Virtualenv
+venv/
+env/
+ENV/
+.venv/
+
+# Migrations (si générées automatiquement, sinon garde-les)
+**/migrations/*.pyc
+**/migrations/__pycache__/
+# (optionnel) : **/migrations/ sauf __init__.py, si tu veux éviter le suivi
+# **/migrations/*
+# !**/migrations/__init__.py
+
+# --- Node (React Native / Expo) ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json  # facultatif selon ta stratégie de lockfile
+.expo/
+.expo-shared/
+dist/
+build/
+web-build/
+android/
+ios/
+
+# Metro cache
+.cache/
+*.pack
+*.hmap
+
+# Expo
+*.tar.gz
+*.expo
+*.expo-shared
+*.expo-debug
+*.expo-source-maps
+*.jsbundle
+
+# --- OS / Éditeurs ---
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.bak
+
+# --- Docker ---
+*.pid
+*.db
+docker-compose.override.yml  # si tu en utilises un pour local uniquement
+
+# --- Logs ---
+*.log
+
+# --- Database (si local uniquement) ---
+*.sqlite3
+*.db
+
+# --- Coverage / Testing ---
+.coverage
+htmlcov/
+.tox/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.cache/
+pytest_cache/
+junit.xml
+
+# --- Environnement local ---
+.env
+.env.local
+.env.dev
+.env.production
+.env.staging
+

@@ -1,0 +1,83 @@
+version: '3.9'
+
+services:
+  # Backend Service (Django)
+  backend:
+    build:
+      context: ./backend_django
+      dockerfile: Dockerfile  # Spécifie explicitement le Dockerfile à utiliser
+    container_name: go_backend
+    ports:
+      - "8000:8000"  # Port de l'application Django
+    volumes:
+      - ./backend_django:/app  # Monte le répertoire de l'application backend dans le conteneur
+    depends_on:
+      - redis  # Le backend dépend de Redis pour Celery
+    environment:
+      - DJANGO_SETTINGS_MODULE=downloader_app.settings  # Paramètre pour Django
+      - CELERY_BROKER_URL=redis://redis:6379/0  # URL de Redis pour Celery
+    command: >
+      sh -c "
+      python manage.py migrate &&  # Applique les migrations
+      python manage.py collectstatic --noinput &&  # Collecte les fichiers statiques
+      gunicorn downloader_app.wsgi:application --bind 0.0.0.0:8000"  # Lance le serveur Gunicorn
+
+  # Celery Worker
+  celery:
+    build:
+      context: ./backend_django
+      dockerfile: Dockerfile  # Spécifie explicitement le Dockerfile à utiliser
+    container_name: go_celery
+    command: celery -A downloader_app worker --loglevel=info  # Lance Celery avec le niveau de log info
+    volumes:
+      - ./backend_django:/app  # Monte le répertoire de l'application backend dans le conteneur
+    depends_on:
+      - backend  # Celery dépend du backend pour fonctionner
+      - redis  # Celery dépend de Redis comme broker
+    environment:
+      - DJANGO_SETTINGS_MODULE=downloader_app.settings  # Paramètre pour Django
+      - CELERY_BROKER_URL=redis://redis:6379/0  # URL de Redis pour Celery
+
+  # Redis (Cache et Broker pour Celery)
+  redis:
+    image: redis:alpine  # Utilise l'image officielle de Redis basée sur Alpine
+    container_name: go_redis
+    ports:
+      - "6379:6379"  # Mappe le port 6379 de Redis à ton hôte
+
+  # Frontend Service (Expo)
+  frontend:
+    build:
+      context: ./downloader_front
+      dockerfile: Dockerfile  # Spécifie explicitement le Dockerfile à utiliser
+    container_name: go_frontend
+    volumes:
+      - ./downloader_front:/app  # Monte le répertoire du frontend dans le conteneur
+    ports:
+      - "19000:19000"  # Expo Go pour mobile
+      - "19001:19001"  # Tunnel/Debugger
+      - "19002:19002"  # Interface web pour Expo
+      - "19006:19006"  # Expo Web Build
+    stdin_open: true
+    tty: true
+    command: ["npx", "expo", "start", "--tunnel"]  # Lancer Expo avec un tunnel pour le développement
+    environment:
+      - EXPO_DEBUG=true  # Active le debug pour Expo
+    depends_on:
+      - backend  # Le frontend peut dépendre du backend pour des appels API
+
+  # (Optionnel) Service pour exécuter la base de données PostgreSQL si nécessaire
+  db:
+    image: postgres:13-alpine  # Image officielle de PostgreSQL
+    container_name: go_db
+    environment:
+      POSTGRES_USER: user  # Nom d'utilisateur PostgreSQL
+      POSTGRES_PASSWORD: password  # Mot de passe PostgreSQL
+      POSTGRES_DB: downloader_app  # Nom de la base de données
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Volume pour persister les données
+
+# Volumes pour persister les données (optionnel si tu utilises PostgreSQL ou d'autres bases de données)
+volumes:
+  postgres_data:
+    driver: local
